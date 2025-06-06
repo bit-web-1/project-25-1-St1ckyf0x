@@ -8,28 +8,29 @@
   including their locations, weaknesses, and strategies to defeat them.
 </p>
 
-<a href="/bosses">View All Bosses</a>
+<a href="/bosses" class="link">View All Bosses</a>
 
 <style>
   h1 {
     font-size: 2.5rem;
     margin-bottom: 1rem;
+    text-transform: lowercase;
   }
 
   p {
     font-size: 1.125rem;
     line-height: 1.6;
+    margin-bottom: 1.5rem;
   }
 
-  a {
+  .link {
     display: inline-block;
-    margin-top: 1rem;
-    color: #0070f3;
+    color: #d4af37; /* gold-ish color */
     text-decoration: none;
     font-weight: bold;
   }
 
-  a:hover {
+  .link:hover {
     text-decoration: underline;
   }
 </style>
