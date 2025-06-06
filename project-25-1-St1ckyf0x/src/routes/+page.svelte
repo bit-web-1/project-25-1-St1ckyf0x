@@ -2,13 +2,18 @@
   // Placeholder for any future logic
 </script>
 
-<h1>Welcome to the Elden Ring Boss Guide</h1>
+<h1>Welcome to the Elden Ring Boss Locator</h1>
+
 <p>
-  This site contains information on all major bosses in <strong>Elden Ring</strong>,
-  including their locations, weaknesses, and strategies to defeat them.
+  Find every major <strong>Elden Ring</strong> boss and their exact locations,
+  so you can plan your journey and hunt them down with ease.
 </p>
 
-<a href="/bosses" class="link">View All Bosses</a>
+<p>
+  Search for bosses, explore their locations, and get quick info to prepare for your fight.
+</p>
+
+<a href="/bosses" class="link">Browse All Bosses & Locations</a>
 
 <style>
   h1 {

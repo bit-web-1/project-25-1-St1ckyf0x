@@ -8,55 +8,80 @@
     location: string;
   };
 
-  let bosses: Boss[] = [];
-  let isLoading = true;
+  let allBosses: Boss[] = [];
+  let filteredBosses: Boss[] = [];
+  let searchInput = '';
+
+  let isLoading = false;
   let error: string | null = null;
 
-  let currentPage = 1;
-  const limit = 20; // bosses per page
-  let totalPages = 1;
+  async function fetchAllBosses() {
+    let bosses: Boss[] = [];
+    let page = 1;
+    const perPage = 50;
+    let total = Infinity; // we'll update this once we know it
 
-  async function fetchBosses(page = 1) {
+    try {
+      while (bosses.length < total && page < 20) { // safety limit of 20 pages
+        const res = await fetch(`https://eldenring.fanapis.com/api/bosses?limit=${perPage}&page=${page}`);
+        if (!res.ok) throw new Error(`Failed to fetch page ${page}`);
+
+        const data = await res.json();
+        if (!data || !data.data || data.data.length === 0) break;
+
+        bosses = bosses.concat(data.data);
+        total = data.total;
+        page++;
+      }
+    } catch (e) {
+      console.error('Error fetching bosses:', e);
+      throw e;
+    }
+
+    return bosses;
+  }
+
+  onMount(async () => {
     isLoading = true;
     error = null;
 
     try {
-      const res = await fetch(`https://eldenring.fanapis.com/api/bosses?page=${page}&limit=${limit}`);
-      if (!res.ok) throw new Error('Failed to fetch bosses');
-
-      const data = await res.json();
-      bosses = data.data;
-      
-      // total count from API response for pagination
-      const totalBosses = data.total; 
-      totalPages = Math.ceil(totalBosses / limit);
-      currentPage = page;
-    } catch (err) {
+      allBosses = await fetchAllBosses();
+      filteredBosses = allBosses;
+    } catch (e) {
       error = 'Failed to load boss data.';
     } finally {
       isLoading = false;
     }
-  }
-
-  onMount(() => {
-    fetchBosses(currentPage);
   });
 
-  function goToPage(page: number) {
-    if (page < 1 || page > totalPages) return;
-    fetchBosses(page);
-  }
+  // Filter bosses locally whenever searchInput changes
+  $: filteredBosses = searchInput.trim() === ''
+    ? allBosses
+    : allBosses.filter(boss =>
+        boss.name.toLowerCase().includes(searchInput.toLowerCase())
+      );
 </script>
 
-<h1>Elden Ring: Boss Overview</h1>
+<div class="header">
+  <h1>Elden Ring Boss Overview</h1>
+  <input
+    type="text"
+    placeholder="Search bosses..."
+    bind:value={searchInput}
+    aria-label="Search bosses"
+  />
+</div>
 
 {#if isLoading}
-  <p>Loading bosses...</p>
+  <p>Loading bosses... (this may take a few seconds)</p>
 {:else if error}
-  <p>{error}</p>
+  <p class="error">{error}</p>
+{:else if filteredBosses.length === 0}
+  <p>No bosses found.</p>
 {:else}
-  <ul>
-    {#each bosses as boss}
+  <ul class="boss-list">
+    {#each filteredBosses as boss}
       <li>
         <h2><a href={`/bosses/${boss.id}`}>{boss.name}</a></h2>
         <p><strong>Location:</strong> {boss.location}</p>
@@ -64,77 +89,57 @@
       </li>
     {/each}
   </ul>
-
-  <nav class="pagination">
-    <button on:click={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>Previous</button>
-
-    {#each Array(totalPages) as _, i}
-      <button
-        class:active={currentPage === i + 1}
-        on:click={() => goToPage(i + 1)}>
-        {i + 1}
-      </button>
-    {/each}
-
-    <button on:click={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}>Next</button>
-  </nav>
 {/if}
 
 <style>
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
   h1 {
-    font-size: 2.5rem;
-    margin-bottom: 2rem;
+    flex-grow: 1;
+    font-size: 2rem;
     text-transform: lowercase;
   }
 
-  ul {
+  input[type="text"] {
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 200px;
+  }
+
+  ul.boss-list {
     list-style: none;
     padding: 0;
+    margin: 0;
   }
 
-  li {
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid #ccc;
-    padding-bottom: 1rem;
+  ul.boss-list li {
+    border-bottom: 1px solid #ddd;
+    padding: 1rem 0;
+  }
+
+  ul.boss-list li h2 {
+    margin: 0 0 0.25rem 0;
+    color: #d4af37;
     text-transform: lowercase;
   }
 
-  a {
-    color: #d4af37;
+  ul.boss-list li a {
+    color: inherit;
     text-decoration: none;
   }
 
-  a:hover {
+  ul.boss-list li a:hover {
     text-decoration: underline;
   }
 
-  p {
-    margin: 0.25rem 0;
-  }
-
-  .pagination {
-    margin-top: 1.5rem;
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .pagination button {
-    background: none;
-    border: 1px solid #d4af37;
-    padding: 0.4rem 0.8rem;
-    cursor: pointer;
-    text-transform: lowercase;
-    color: #d4af37;
-  }
-
-  .pagination button:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-
-  .pagination button.active {
-    background-color: #d4af37;
-    color: black;
+  .error {
+    color: red;
   }
 </style>
