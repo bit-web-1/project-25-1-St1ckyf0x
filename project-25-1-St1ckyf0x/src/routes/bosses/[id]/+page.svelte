@@ -5,8 +5,7 @@
   type Boss = {
     id: string;
     name: string;
-    weakness?: string;
-    strategy?: string;
+    image: string;
     description?: string;
     location?: string;
   };
@@ -51,21 +50,22 @@
   <h1>Error</h1>
   <p>{error}</p>
 {:else if boss}
-  <h1>{boss.name}</h1>
-  {#if boss.weakness}
-    <p><strong>Weakness:</strong> {boss.weakness}</p>
-  {/if}
-  {#if boss.strategy}
-    <h2>Strategy</h2>
-    <pre>{boss.strategy}</pre>
-  {/if}
-  {#if boss.description}
-    <h2>Description</h2>
-    <p>{boss.description}</p>
-  {/if}
-  {#if boss.location}
-    <p><strong>Location:</strong> {boss.location}</p>
-  {/if}
+  <div class="boss-container">
+    <div class="boss-text">
+      <h1>{boss.name}</h1>
+      {#if boss.description}
+        <h2>Description</h2>
+        <p>{boss.description}</p>
+      {/if}
+      {#if boss.location}
+        <p><strong>Location:</strong> {boss.location}</p>
+      {/if}
+    </div>
+
+    {#if boss.image}
+      <img src={boss.image} alt={`Image of ${boss.name}`} class="boss-image" />
+    {/if}
+  </div>
 {:else}
   <h1>Boss not found</h1>
   <p>Sorry, we couldn't find an Elden Ring boss with that ID.</p>
@@ -79,14 +79,6 @@
 
   h2 {
     margin-top: 1.5rem;
-  }
-
-  pre {
-    white-space: pre-wrap;
-    background: #f8f8f8;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    font-family: inherit;
   }
 
   p {
@@ -103,5 +95,22 @@
 
   .back-link:hover {
     text-decoration: underline;
+  }
+
+  .boss-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+  }
+
+  .boss-text {
+    flex: 1;
+  }
+
+  .boss-image {
+    max-width: 500px;
+    width: 100%;
+    border-radius: 6px;
+    object-fit: contain;
   }
 </style>

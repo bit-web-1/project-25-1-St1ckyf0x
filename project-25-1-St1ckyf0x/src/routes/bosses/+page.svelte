@@ -1,94 +1,120 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
+  // Boss data shape from API
   type Boss = {
     id: string;
     name: string;
+    image: string;
     description: string;
     location: string;
   };
 
-  let allBosses: Boss[] = [];
-  let filteredBosses: Boss[] = [];
-  let searchInput = '';
+  // State variables
+  let bosses: Boss[] = [];
+  let currentPage = 0; // zero-based for API calls
+  const perPage = 50; // how many bosses per page
+  let totalPages = 1;
+  let totalBosses = 0;
 
   let isLoading = false;
+  let minLoading = false;
   let error: string | null = null;
 
-  async function fetchAllBosses() {
-    let bosses: Boss[] = [];
-    let page = 1;
-    const perPage = 50;
-    let total = Infinity; // we'll update this once we know it
-
-    try {
-      while (bosses.length < total && page < 20) { // safety limit of 20 pages
-        const res = await fetch(`https://eldenring.fanapis.com/api/bosses?limit=${perPage}&page=${page}`);
-        if (!res.ok) throw new Error(`Failed to fetch page ${page}`);
-
-        const data = await res.json();
-        if (!data || !data.data || data.data.length === 0) break;
-
-        bosses = bosses.concat(data.data);
-        total = data.total;
-        page++;
-      }
-    } catch (e) {
-      console.error('Error fetching bosses:', e);
-      throw e;
-    }
-
-    return bosses;
-  }
-
-  onMount(async () => {
+  // Fetch one page of bosses from API
+  async function fetchBossesPage(page: number) {
     isLoading = true;
+    minLoading = true;
     error = null;
 
-    try {
-      allBosses = await fetchAllBosses();
-      filteredBosses = allBosses;
-    } catch (e) {
-      error = 'Failed to load boss data.';
-    } finally {
-      isLoading = false;
-    }
+      // Minimum loading timer promise
+  const minLoadingTimer = new Promise((resolve) => {
+    setTimeout(() => {
+      minLoading = false;
+      resolve(null);
+    }, 3000); // 3 seconds minimum loading screen
   });
 
-  // Filter bosses locally whenever searchInput changes
-  $: filteredBosses = searchInput.trim() === ''
-    ? allBosses
-    : allBosses.filter(boss =>
-        boss.name.toLowerCase().includes(searchInput.toLowerCase())
-      );
+    try {
+      const res = await fetch(`https://eldenring.fanapis.com/api/bosses?limit=${perPage}&page=${page}`);
+      if (!res.ok) throw new Error(`Failed to fetch page ${page + 1}`);
+
+      const data = await res.json();
+      bosses = data.data;
+      totalBosses = data.total;
+      totalPages = Math.ceil(totalBosses / perPage);
+      currentPage = page;
+
+    } catch (e) {
+      error = (e as Error).message || 'Failed to load bosses.';
+      bosses = [];
+    } finally {
+      isLoading = false;
+      await minLoadingTimer;
+    }
+  }
+
+  // Trigger fetch if page is different
+  function goToPage(page: number) {
+    if (page !== currentPage) {
+      fetchBossesPage(page);
+    }
+  }
+
+  // Fetch first page on load
+  onMount(() => {
+    fetchBossesPage(0);
+  });
 </script>
 
 <div class="header">
-  <h1>Elden Ring Boss Overview</h1>
-  <input
-    type="text"
-    placeholder="Search bosses..."
-    bind:value={searchInput}
-    aria-label="Search bosses"
-  />
+  <h1>Elden Ring Boss Overview and Location</h1>
 </div>
 
-{#if isLoading}
-  <p>Loading bosses... (this may take a few seconds)</p>
+{#if isLoading || minLoading}
+  <div class="loading-screen" aria-label="Loading">
+    <img src="/elden-ring-loading-logo.png" alt="Elden Ring Loading Logo" class="loading-logo" />
+  </div>
 {:else if error}
   <p class="error">{error}</p>
-{:else if filteredBosses.length === 0}
+{:else if bosses.length === 0}
   <p>No bosses found.</p>
 {:else}
-  <ul class="boss-list">
-    {#each filteredBosses as boss}
-      <li>
-        <h2><a href={`/bosses/${boss.id}`}>{boss.name}</a></h2>
-        <p><strong>Location:</strong> {boss.location}</p>
-        <p>{boss.description.length > 100 ? boss.description.slice(0, 100) + '...' : boss.description}</p>
-      </li>
+  <!-- List bosses -->
+<ul class="boss-list">
+  {#each bosses as boss}
+    <li class="boss-item">
+      <div class="boss-content">
+        <div class="boss-text">
+          <h2><a href={`/bosses/${boss.id}`}>{boss.name}</a></h2>
+          <p><strong>Location:</strong> {boss.location}</p>
+          <p>{boss.description.length > 100 ? boss.description.slice(0, 100) + '...' : boss.description}</p>
+        </div>
+        {#if boss.image}
+          <img src={boss.image} alt={`Image of ${boss.name}`} class="boss-image" />
+        {/if}
+      </div>
+    </li>
+  {/each}
+</ul>
+
+
+
+
+  <!-- Pagination buttons -->
+  <div class="pagination" role="navigation" aria-label="Pagination Navigation">
+    {#each Array(totalPages) as _, index}
+      <button
+        class:selected={currentPage === index}
+        on:click={() => goToPage(index)}
+        aria-current={currentPage === index ? 'page' : undefined}
+        disabled={currentPage === index}
+        aria-label={`Page ${index + 1}`}
+      >
+        {index + 1}
+      </button>
     {/each}
-  </ul>
+  </div>
 {/if}
 
 <style>
@@ -103,14 +129,6 @@
     flex-grow: 1;
     font-size: 2rem;
     text-transform: lowercase;
-  }
-
-  input[type="text"] {
-    padding: 0.5rem;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    width: 200px;
   }
 
   ul.boss-list {
@@ -142,4 +160,89 @@
   .error {
     color: red;
   }
+
+  .pagination {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .pagination button {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid #d4af37;
+    border-radius: 4px;
+    background-color: transparent;
+    color: #d4af37;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  .pagination button:hover:not(:disabled) {
+    background-color: #d4af37;
+    color: black;
+  }
+
+  .pagination button.selected,
+  .pagination button:disabled {
+    background-color: #d4af37;
+    color: black;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .loading-screen {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.loading-logo {
+  width: 150px;
+  height: 150px;
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px #d4af37);
+  }
+  50% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 15px #d4af37);
+  }
+}
+
+.boss-item {
+  padding: 1rem 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.boss-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.boss-text {
+  flex: 1;
+}
+
+.boss-image {
+  max-width: 150px;
+  width: 100%;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+
+
 </style>
