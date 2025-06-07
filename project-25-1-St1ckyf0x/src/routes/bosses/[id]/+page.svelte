@@ -8,6 +8,8 @@
     image: string;
     description?: string;
     location?: string;
+    healthPoints?: string;
+    drops?: string[];
   };
 
   let boss: Boss | null = null;
@@ -53,12 +55,27 @@
   <div class="boss-container">
     <div class="boss-text">
       <h1>{boss.name}</h1>
+
       {#if boss.description}
         <h2>Description</h2>
         <p>{boss.description}</p>
       {/if}
+
       {#if boss.location}
         <p><strong>Location:</strong> {boss.location}</p>
+      {/if}
+
+      {#if boss.healthPoints}
+        <p><strong>Health:</strong> {boss.healthPoints}</p>
+      {/if}
+
+      {#if boss.drops && boss.drops.length > 0}
+        <h2>Drops</h2>
+        <ul class="drops-list">
+          {#each boss.drops as drop}
+            <li>{drop}</li>
+          {/each}
+        </ul>
       {/if}
     </div>
 
@@ -70,6 +87,7 @@
   <h1>Boss not found</h1>
   <p>Sorry, we couldn't find an Elden Ring boss with that ID.</p>
 {/if}
+
 
 <style>
   h1 {
@@ -113,4 +131,26 @@
     border-radius: 6px;
     object-fit: contain;
   }
+
+  .drops-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0; /* Added vertical spacing around the list */
+}
+
+.drops-list li {
+  margin-bottom: 0.5rem;    /* Adds spacing between each drop */
+  padding-left: 1.2rem;     /* Creates space for a custom bullet */
+  position: relative;       /* Needed for positioning the custom bullet */
+}
+
+.drops-list li::before {
+  content: '•';             /* Custom bullet character */
+  position: absolute;       /* Position it inside the li */
+  left: 0;                  /* Align left inside the li */
+  color: #d4af37;           /* Styled gold color */
+  font-weight: bold;        /* Make it stand out */
+}
+
+
 </style>

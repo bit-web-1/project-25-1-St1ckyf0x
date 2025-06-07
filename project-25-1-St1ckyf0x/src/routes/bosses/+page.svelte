@@ -8,6 +8,8 @@
     image: string;
     description: string;
     location: string;
+    healthPoints?: string;   // Added
+    drops?: string[];        // Added
   };
 
   // State variables
