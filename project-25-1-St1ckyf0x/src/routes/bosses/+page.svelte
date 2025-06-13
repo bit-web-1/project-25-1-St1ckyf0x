@@ -46,7 +46,7 @@
       totalBosses = data.total;
       totalPages = Math.ceil(totalBosses / perPage);
       currentPage = page;
-
+      
     } catch (e) {
       error = (e as Error).message || 'Failed to load bosses.';
       bosses = [];
@@ -68,6 +68,8 @@
     fetchBossesPage(0);
   });
 </script>
+
+<div class="scroll-hint">Scroll down for content ↓</div>
 
 <div class="header">
   <h1>Elden Ring Boss Overview and Location</h1>
@@ -120,6 +122,14 @@
 {/if}
 
 <style>
+    .scroll-hint {
+    font-weight: bold;
+    font-size: 1.25rem;
+    text-align: center;
+    padding: 1rem 0;
+    color: #d4af37; /* gold-ish color */
+  }
+  
   .header {
     display: flex;
     align-items: center;

@@ -2,20 +2,30 @@
   // Placeholder for any future logic
 </script>
 
+<div class="scroll-hint">Scroll down for content ↓</div>
+
 <h1>Welcome to the Elden Ring Boss Locator</h1>
 
+
 <p>
-  Find every major <strong>Elden Ring</strong> boss and their exact locations,
-  so you can plan your journey and hunt them down with ease.
+  Discover every <strong>Elden Ring</strong> boss — including their location, health points, descriptions, and item drops.
 </p>
 
 <p>
-  Search for bosses, explore their locations, and get quick info to prepare for your fight.
+  With information pulled live from the fan API, this site makes it easy to find out where all the bosses are located, gather relevant information about each boss, and decide for yourself whether it is worth the trek.
 </p>
 
 <a href="/bosses" class="link">Browse All Bosses & Locations</a>
 
 <style>
+    .scroll-hint {
+    font-weight: bold;
+    font-size: 1.25rem;
+    text-align: center;
+    padding: 1rem 0;
+    color: #d4af37; /* gold-ish color */
+  }
+
   h1 {
     font-size: 2.5rem;
     margin-bottom: 1rem;
